@@ -18,8 +18,8 @@ def check_db():
     try:
         cursor.execute("SELECT * FROM settings")
     except sqlite3.OperationalError:
-        cursor.execute("CREATE TABLE settings(id INTEGER PRIMARY KEY AUTOINCREMENT, qiwi INT, video INT, photo INT, stbal INT, bonus INT)")
-        cursor.execute(f"INSERT INTO settings(qiwi, video, photo, stbal, bonus) VALUES (89876543210, 10, 5, 30, 30)")
+        cursor.execute("CREATE TABLE settings(id INTEGER PRIMARY KEY AUTOINCREMENT, qiwi TEXT, video INT, photo INT, stbal INT, bonus INT)")
+        cursor.execute(f"INSERT INTO settings(qiwi, video, photo, stbal, bonus) VALUES ('89876543210', 10, 5, 30, 30)")
         db.commit()
     print(f"-----   {_datetime}   -----")
     print(f"---------   Users: {len(get_all_users())}   --------\n")
@@ -53,7 +53,7 @@ def get_settings():
 def update_settings(command, value):
     db = sqlite3.connect('database.db')
     cursor = db.cursor()
-    cursor.execute(f"UPDATE settings SET {command} = {value}")
+    cursor.execute(f"UPDATE settings SET {command} = '{value}'")
     db.commit()
 
 def get_users_exist(user_id):
