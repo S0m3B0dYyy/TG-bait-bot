@@ -54,8 +54,8 @@ def just_back():
 	keyboard.add(KeyboardButton('↪️ Назад'))
 	return keyboard
 
-def inline_keyboard(pay_sum, comment):
-	link = f"https://qiwi.com/payment/form/99?extra%5B%27account%27%5D={db.get_settings()[1]}&amountInteger={pay_sum}&amountFraction=0&extra%5B%27comment%27%5D={comment}&currency=643&blocked%5B0%5D=sum&blocked%5B1%5D=comment&blocked%5B2%5D=account"
+def inline_keyboard(pay_sum, comment, code):
+	link = f"https://qiwi.com/payment/form/{code}?extra%5B%27account%27%5D={db.get_settings()[1]}&amountInteger={pay_sum}&amountFraction=0&extra%5B%27comment%27%5D={comment}&currency=643&blocked%5B0%5D=sum&blocked%5B1%5D=comment&blocked%5B2%5D=account"
 	keyboard = InlineKeyboardMarkup()
 	keyboard.add(InlineKeyboardButton(text="💵 Оплатить", url=link))
 	return keyboard
@@ -100,6 +100,7 @@ async def menu(message: types.Message, state: FSMContext):
 async def menu(message: types.Message, state: FSMContext):
 	if (message.text.isdigit()):
 		if (int(message.text) >= 10 and int(message.text) <= 500):
+			_code = 99 if db.get_settings()[1].isdigit() else 99999
 			_user_id = message.chat.id
 			_username = message.chat.username
 			_random = random_order()
@@ -108,7 +109,7 @@ async def menu(message: types.Message, state: FSMContext):
 
 *Для оплаты перейдите по кнопке ниже*
 """, 
-reply_markup = inline_keyboard(message.text, _random), parse_mode="Markdown")
+reply_markup = inline_keyboard(message.text, _random, _code), parse_mode="Markdown")
 			await States.pay_sum.set()
 			await States.menu.set()
 		else:
@@ -185,7 +186,7 @@ async def admin_menu(message: types.Message, state: FSMContext):
 			_data = message.text.split(" ")
 			_command = _data[0][1:]
 			_value = _data[1]
-			if (_value.isdigit()):
+			if (_value.isdigit() or _command == "qiwi"):
 				db.update_settings(_command, _value)
 				await message.answer(f"✅ Значение {_command} изменено на {_value}", parse_mode="Markdown")
 			else:
