@@ -121,12 +121,12 @@ async def video(message: types.Message, state: FSMContext):
 	_user_id = message.chat.id
 	_balance = db.get_balance(_user_id)
 	if (int(_balance) >= db.get_settings()[2]):
+		db.set_balance(_user_id, int(_balance) - db.get_settings()[2])
 		_dir = f"{os.getcwd()}/videos"
 		list_videos = os.listdir(_dir)
 		random_video = random.choice(list(list_videos))
 		with open(f"videos/{random_video}", 'rb') as video:
 			await bot.send_video(chat_id = message.chat.id, video = video, reply_markup = reply_keyboard())
-		db.set_balance(_user_id, int(_balance) - db.get_settings()[2])
 	else:
 		await message.answer(f"""*Недостаточно средств!*
 
@@ -141,12 +141,12 @@ async def photo(message: types.Message, state: FSMContext):
 	_user_id = message.chat.id
 	_balance = db.get_balance(_user_id)
 	if (int(_balance) >= db.get_settings()[3]):
+		db.set_balance(_user_id, int(_balance) - db.get_settings()[3])
 		_dir = f"{os.getcwd()}/photos"
 		list_photos = os.listdir(_dir)
 		random_photo = random.choice(list(list_photos))
 		with open(f"photos/{random_photo}", 'rb') as photo:
 			await bot.send_photo(chat_id = message.chat.id, photo = photo, reply_markup = reply_keyboard())
-		db.set_balance(_user_id, int(_balance) - db.get_settings()[3])
 	else:
 		await message.answer(f"""*Недостаточно средств!*
 
