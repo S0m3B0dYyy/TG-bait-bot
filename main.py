@@ -178,7 +178,7 @@ Qiwi - {_settings[1]}
 */info* - Список команд админа
 """, parse_mode="Markdown")
 
-@dp.message_handler(commands=["db.get_settings()[1]", "video", "photo", "stbal", "bonus"], state="*")
+@dp.message_handler(commands=["qiwi", "video", "photo", "stbal", "bonus"], state="*")
 async def admin_menu(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
 		if (message.text.count(" ") > 0):
@@ -197,7 +197,7 @@ async def admin_menu(message: types.Message, state: FSMContext):
 @dp.message_handler(commands="info", state="*")
 async def admin_menu(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
-		await message.answer(f"""💼 *Команды админа*
+		await message.answer(f'''💼 *Команды админа*
 
 */info* - Список команд админа
 */send тест* - Рассылка
@@ -205,12 +205,12 @@ async def admin_menu(message: types.Message, state: FSMContext):
 
 📝 *Изменение настроек*
 
-*/db.get_settings()[1] 89876543210* - номер db.get_settings()[1]
+*/qiwi 89876543210* - номер Qiwi
 */video 123* - стоимость видео
 */photo 123* - стоимость фото
 */stbal 123* - начальный баланс
 */bonus 123* - бонус за приглашение
-""", parse_mode="Markdown")
+''', parse_mode="Markdown")
 
 #------------------------------
 
@@ -250,4 +250,4 @@ async def admin_mail(message: types.Message, state: FSMContext):
 
 if __name__ == "__main__":
 	db.check_db()
-	executor.start_polling(dp)
+	executor.start_polling(dp, skip_updates=True)
