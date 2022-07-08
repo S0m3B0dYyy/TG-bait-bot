@@ -250,4 +250,4 @@ async def admin_mail(message: types.Message, state: FSMContext):
 
 if __name__ == "__main__":
 	db.check_db()
-	executor.start_polling(dp, skip_updates=True)
+	executor.start_polling(dp)
