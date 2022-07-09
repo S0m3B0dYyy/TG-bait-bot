@@ -108,6 +108,6 @@ def get_all_users():
 def get_week_users():
     db = sqlite3.connect('database.db')
     cursor = db.cursor()
-    cursor.execute(f"""SELECT user_id FROM users WHERE ([reg_date] BETWEEN date('now', '-7 day') AND date('now'))""")
+    cursor.execute(f"""SELECT user_id FROM users WHERE ([reg_date] BETWEEN date('now', '-7 day') AND date('now', '+1 day'))""")
     row = cursor.fetchall()
     return row
