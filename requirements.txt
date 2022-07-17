@@ -1,2 +1,3 @@
 aiogram
 datetime
+configparser
