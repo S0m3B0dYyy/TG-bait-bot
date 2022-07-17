@@ -1,6 +1,6 @@
 import sqlite3
 import string
-import os, time, random
+import os, time, random, configparser
 from aiogram import Bot, types
 from aiogram.utils import executor
 from aiogram.dispatcher import Dispatcher, FSMContext
@@ -9,10 +9,12 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 import db
 
-token = "0000000:AAAAAAA" # Токен телеграм бота
-admin_id = 123456789 # ID админа
-admin_link = "@link" # Ссылка на админа с @ в начале
-link = "link_bot" # Ссылка на бота без @ в начале
+config = configparser.ConfigParser()
+config.read("settings.ini")
+token = config["bot"]["token"]
+admin_id = int(config["bot"]["admin_id"])
+admin_link = config["bot"]["admin_link"]
+link = config["bot"]["link"]
 
 bot = Bot(token=token)
 
@@ -40,6 +42,21 @@ def profile(user_id):
 *t.me/{link}?start={user_id}*
 
 *Администратор:* {admin_link} 
+"""
+
+def get_user_info(user_id):
+	_data = db.get_info(user_id)
+	_pre_ref = db.get_pre_ref(user_id)
+	_pre_ref_str = f"""{_pre_ref} (@{db.get_info(_pre_ref)[2]})""" if int(_pre_ref) != 0 else "Нет"
+	return f"""INFO *@{_data[2]}*
+
+👤 *ID:* {_data[1]}
+📅 *Дата регистрации:* {_data[3]}
+💵 *Баланс:* {_data[5]}
+
+👤 *Реферал:* {_pre_ref_str}
+
+👤 *Приглашено:* {db.get_refs(user_id)}
 """
 
 def reply_keyboard():
@@ -166,7 +183,8 @@ async def admin_menu(message: types.Message, state: FSMContext):
 		await message.answer(f"""💼 *Меню администратора*
 
 👥 Пользователей всего: {len(db.get_all_users())}
-👤 За неделю: {len(db.get_week_users())}
+👤 За неделю: {len(db.get_old_users(7))}
+👤 За день: {len(db.get_old_users(1))}
 
 📝 *Настройки*
 
@@ -176,7 +194,7 @@ Qiwi - {_settings[1]}
 Начальный баланс - {_settings[4]}
 Бонус рефки - {_settings[5]}
 
-*/info* - Список команд админа
+*/help* - Список команд админа
 """, parse_mode="Markdown")
 
 @dp.message_handler(commands=["qiwi", "video", "photo", "stbal", "bonus"], state="*")
@@ -195,14 +213,16 @@ async def admin_menu(message: types.Message, state: FSMContext):
 			await bot.send_message(message.chat.id, f"Неверный формат команды")
 
 
-@dp.message_handler(commands="info", state="*")
+@dp.message_handler(commands="help", state="*")
 async def admin_menu(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
 		await message.answer(f'''💼 *Команды админа*
 
-*/info* - Список команд админа
+*/help* - Список команд админа
 */send тест* - Рассылка
 */pay ID 123* - Пополнение по ID
+*/pay all 100* - Пополнение всем
+*/info 123* - Информация о пользователе по ID
 
 📝 *Изменение настроек*
 
@@ -215,37 +235,66 @@ async def admin_menu(message: types.Message, state: FSMContext):
 
 #------------------------------
 
-@dp.message_handler(state="*")
+@dp.message_handler(commands="send", state="*")
 async def admin_mail(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
-		if (message.text.startswith("/send ")):
-			text = message.text.replace("/send ", "")
-			users = db.get_all_users()
-			a = 0
-			for user in users:
-				try:
-					await bot.send_message(chat_id=user[0], text=text, parse_mode="Markdown")
-					a += 1
-					time.sleep(0.1)
-				except:
-					pass
-			await bot.send_message(message.chat.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
-		if (message.text.startswith("/pay ")):
-			_data = message.text.split(" ")
-			if (len(_data) > 2):
-				_ID = _data[1]
-				_sum = _data[2]
-				if (_ID.isdigit() and (_sum.isdigit()) or _sum.replace("-", "").isdigit()):
+		text = message.text.replace("/send ", "")
+		users = db.get_all_users()
+		a = 0
+		for user in users:
+			try:
+				await bot.send_message(chat_id=user[0], text=text, parse_mode="Markdown")
+				a += 1
+				time.sleep(0.1)
+			except:
+				pass
+		await bot.send_message(message.chat.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
+
+@dp.message_handler(commands="info", state="*")
+async def admin_mail(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		_ID = message.text.replace("/info ", "")
+		_data = db.get_info(_ID)
+		if not (_ID.isdigit()):
+			await bot.send_message(message.chat.id, f"Неверный формат команды")
+		elif (_data == None):
+			await bot.send_message(message.chat.id, f"❌ Пользователь не найден")
+		else:
+			await message.answer(get_user_info(_ID), reply_markup = reply_keyboard(), parse_mode="Markdown")
+
+@dp.message_handler(commands="pay", state="*")
+async def admin_mail(message: types.Message, state: FSMContext):		
+	if (message.chat.id == admin_id):
+		_data = message.text.split(" ")
+		if (len(_data) > 2):
+			_ID = _data[1]
+			_sum = _data[2]
+			if (_sum.isdigit()) or _sum.replace("-", "").isdigit():
+				if (_ID.isdigit()):
 					if (db.get_users_exist(_ID)):
 						db.set_balance(_ID, db.get_balance(_ID) + int(_sum))
 						_info = db.get_info(_ID)
 						await bot.send_message(message.chat.id, f"✅ Баланс {_ID} (@{_info[2]}) пополнен на {_sum}")
+						await bot.send_message(_ID, f"Ваш баланс пополнен на {_sum}")
 					else:
 						await bot.send_message(message.chat.id, f"❌ Пользователь не найден")
+				elif (_ID == "all"):
+					users = db.get_all_users()
+					a = 0
+					for user in users:
+						try:
+							db.set_balance(user[0], int(db.get_balance(user[0])) + int(_sum))
+							await bot.send_message(user[0], f"Ваш баланс пополнен на {_sum}")
+							a += 1
+						except:
+							pass
+					await bot.send_message(message.chat.id, f"✅ Баланс {a} пользователей пополнен на {_sum}")
 				else:
 					await bot.send_message(message.chat.id, f"Неверный формат команды")
 			else:
 				await bot.send_message(message.chat.id, f"Неверный формат команды")
+		else:
+			await bot.send_message(message.chat.id, f"Неверный формат команды")
 
 #------------------------------
 
