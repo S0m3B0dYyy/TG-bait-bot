@@ -98,6 +98,13 @@ def get_refs(user_id):
     row = cursor.fetchall()
     return len(row)
 
+def get_pre_ref(user_id):
+    db = sqlite3.connect('database.db')
+    cursor = db.cursor()
+    cursor.execute(f"SELECT ref_id FROM users WHERE user_id = {user_id}")
+    row = cursor.fetchone()
+    return row[0]
+
 def get_all_users():
     db = sqlite3.connect('database.db')
     cursor = db.cursor()
@@ -105,9 +112,9 @@ def get_all_users():
     row = cursor.fetchall()
     return row
 
-def get_week_users():
+def get_old_users(days):
     db = sqlite3.connect('database.db')
     cursor = db.cursor()
-    cursor.execute(f"""SELECT user_id FROM users WHERE ([reg_date] BETWEEN date('now', '-7 day') AND date('now', '+1 day'))""")
+    cursor.execute(f"""SELECT user_id FROM users WHERE ([reg_date] BETWEEN date('now', '-{days} day') AND date('now', '+1 day'))""")
     row = cursor.fetchall()
     return row
