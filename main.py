@@ -266,14 +266,14 @@ async def admin_mail(message: types.Message, state: FSMContext):
 @dp.message_handler(commands="top", state="*")
 async def admin_mail(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
-		_text = "*💵 Топ по балансу*"
+		_text = "<b>💵 Топ по балансу</b>"
 		for i in db.get_top_balance(5):
 			_text = _text + f"\n{i[5]} | {i[1]} (@{i[2]})"
 		_text = _text + "\n\n"
-		_text = _text + "*👥 Топ по рефералам*"
+		_text = _text + "<b>👥 Топ по рефералам</b>"
 		for i in db.get_top_ref(5):
 			_text = _text + f"\n{i[6]} | {i[1]} (@{i[2]})"
-		await message.answer(_text, reply_markup=reply_keyboard(), parse_mode="Markdown")
+		await message.answer(_text, reply_markup=reply_keyboard(), parse_mode="HTML")
 
 @dp.message_handler(commands="pay", state="*")
 async def admin_mail(message: types.Message, state: FSMContext):		
