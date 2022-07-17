@@ -220,6 +220,7 @@ async def admin_menu(message: types.Message, state: FSMContext):
 
 */help* - Список команд админа
 */send тест* - Рассылка
+*/top* - Рейтинг пользователей
 */pay ID 123* - Пополнение по ID
 */pay all 100* - Пополнение всем
 */info 123* - Информация о пользователе по ID
@@ -262,6 +263,18 @@ async def admin_mail(message: types.Message, state: FSMContext):
 		else:
 			await message.answer(get_user_info(_ID), reply_markup = reply_keyboard(), parse_mode="Markdown")
 
+@dp.message_handler(commands="top", state="*")
+async def admin_mail(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		_text = "*💵 Топ по балансу*"
+		for i in db.get_top_balance(5):
+			_text = _text + f"\n{i[5]} | {i[1]} (@{i[2]})"
+		_text = _text + "\n\n"
+		_text = _text + "*👥 Топ по рефералам*"
+		for i in db.get_top_ref(5):
+			_text = _text + f"\n{i[6]} | {i[1]} (@{i[2]})"
+		await message.answer(_text, reply_markup=reply_keyboard(), parse_mode="Markdown")
+
 @dp.message_handler(commands="pay", state="*")
 async def admin_mail(message: types.Message, state: FSMContext):		
 	if (message.chat.id == admin_id):
@@ -300,4 +313,4 @@ async def admin_mail(message: types.Message, state: FSMContext):
 
 if __name__ == "__main__":
 	db.check_db()
-	executor.start_polling(dp, skip_updates=True)
+	executor.start_polling(dp)
