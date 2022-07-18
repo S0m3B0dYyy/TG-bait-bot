@@ -272,7 +272,8 @@ async def admin_mail(message: types.Message, state: FSMContext):
 		_text = _text + "\n\n"
 		_text = _text + "<b>👥 Топ по рефералам</b>"
 		for i in db.get_top_ref(5):
-			_text = _text + f"\n{i[6]} | {i[1]} (@{i[2]})"
+			_temp_name = db.get_info(i[0])[2]
+			_text = _text + f"\n{i[1]} | {i[0]} (@{_temp_name})"
 		await message.answer(_text, reply_markup=reply_keyboard(), parse_mode="HTML")
 
 @dp.message_handler(commands="pay", state="*")
