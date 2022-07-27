@@ -251,6 +251,34 @@ async def admin_mail(message: types.Message, state: FSMContext):
 				pass
 		await bot.send_message(message.chat.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
 
+@dp.message_handler(content_types=types.ContentTypes.PHOTO, state="*")
+async def cmd_get_logs(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		text = message.caption if message.caption else ""
+		if text.startswith("/test"):
+			text = text.replace("/test", "")
+			try:
+				await bot.send_photo(message.chat.id, photo=message.photo[0].file_id, caption=text)
+			except:
+				await bot.send_message(message.chat.id, f"❌ Неверный текст")
+		else:
+			users = db.get_all_users()
+			a = 0
+			for user in users:
+				await bot.send_photo(chat_id=user[0], photo=message.photo[0].file_id, caption=text)
+				a += 1
+				time.sleep(0.1)
+			await bot.send_message(message.chat.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
+
+@dp.message_handler(commands="test", state="*")
+async def admin_mail(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		text = message.text.replace("/test ", "")
+		try:
+			await bot.send_message(message.chat.id, text, parse_mode="Markdown")
+		except:
+			await bot.send_message(message.chat.id, f"❌ Неверный текст")
+
 @dp.message_handler(commands="info", state="*")
 async def admin_mail(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
