@@ -265,9 +265,12 @@ async def cmd_get_logs(message: types.Message, state: FSMContext):
 			users = db.get_all_users()
 			a = 0
 			for user in users:
-				await bot.send_photo(chat_id=user[0], photo=message.photo[0].file_id, caption=text)
-				a += 1
-				time.sleep(0.1)
+				try:
+					await bot.send_photo(chat_id=user[0], photo=message.photo[0].file_id, caption=text)
+					a += 1
+					time.sleep(0.1)
+				except:
+					pass
 			await bot.send_message(message.chat.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
 
 @dp.message_handler(commands="test", state="*")
