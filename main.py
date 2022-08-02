@@ -29,19 +29,19 @@ class States(StatesGroup):
 
 def profile(user_id):
 	_data = db.get_info(user_id)
-	return f"""*Привет*, *{_data[2]}*!
+	return f"""<b>Привет, {_data[2]}!</b>
 
-👤 *Ваш ID:* {_data[1]}
-📅 *Дата регистрации:* {_data[3]}
-💵 *Баланс:* {_data[5]}
+👤 <b>Ваш ID:</b> {_data[1]}
+📅 <b>Дата регистрации:</b> {_data[3]}
+💵 <b>Баланс:</b> {_data[5]}
 
-🔥 *Вывод от 100₽*
-*Зарабатывай по {db.get_settings()[5]}₽ за каждого приглашенного друга!*
+🔥 <b>Вывод от 100₽
+Зарабатывай по {db.get_settings()[5]}₽ за каждого приглашенного друга!</b>
 
-👤 *Приглашено:* {db.get_refs(user_id)}
-*t.me/{link}?start={user_id}*
+👤 <b>Приглашено:</b> {db.get_refs(user_id)}
+<b>t.me/{link}?start={user_id}</b>
 
-*Администратор:* {admin_link} 
+<b>Администратор:</b> {admin_link} 
 """
 
 def get_user_info(user_id):
@@ -103,7 +103,7 @@ async def menu(message: types.Message, state: FSMContext):
 			db.add_user_to_db(message.chat.id, message.chat.username, 0, db.get_settings()[4])
 			await bot.send_message(chat_id = admin_id, text = f"Новый пользователь: {_user_id} (@{_username})")
 	db.update_nickname(_user_id, _username)
-	await message.answer(profile(_user_id), reply_markup = reply_keyboard(), parse_mode="Markdown")
+	await message.answer(profile(_user_id), reply_markup = reply_keyboard(), parse_mode="HTML")
 	await States.menu.set()
 
 @dp.message_handler(text=["💵 Пополнить баланс"], state=States.menu)
@@ -146,12 +146,12 @@ async def video(message: types.Message, state: FSMContext):
 		with open(f"videos/{random_video}", 'rb') as video:
 			await bot.send_video(chat_id = message.chat.id, video = video, reply_markup = reply_keyboard())
 	else:
-		await message.answer(f"""*Недостаточно средств!*
+		await message.answer(f"""<b>Недостаточно средств!</b>
 
 Пополните баланс или пригласите друзей по ссылке:
-*t.me/{link}?start={_user_id}*
+<b>t.me/{link}?start={_user_id}</b>
 """
-, reply_markup = reply_keyboard(), parse_mode="Markdown")
+, reply_markup = reply_keyboard(), parse_mode="HTNL")
 	await States.menu.set()
 
 @dp.message_handler(text=["🖼 Фото"], state="*")
@@ -166,12 +166,12 @@ async def photo(message: types.Message, state: FSMContext):
 		with open(f"photos/{random_photo}", 'rb') as photo:
 			await bot.send_photo(chat_id = message.chat.id, photo = photo, reply_markup = reply_keyboard())
 	else:
-		await message.answer(f"""*Недостаточно средств!*
+		await message.answer(f"""<b>Недостаточно средств!</b>
 
 Пополните баланс или пригласите друзей по ссылке:
-*t.me/{link}?start={_user_id}*
+<b>t.me/{link}?start={_user_id}</b>
 """
-, reply_markup = reply_keyboard(), parse_mode="Markdown")
+, reply_markup = reply_keyboard(), parse_mode="HTNL")
 	await States.menu.set()
 
 #------------------------------
