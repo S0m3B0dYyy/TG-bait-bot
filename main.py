@@ -151,7 +151,7 @@ async def video(message: types.Message, state: FSMContext):
 Пополните баланс или пригласите друзей по ссылке:
 <b>t.me/{link}?start={_user_id}</b>
 """
-, reply_markup = reply_keyboard(), parse_mode="HTNL")
+, reply_markup = reply_keyboard(), parse_mode="HTML")
 	await States.menu.set()
 
 @dp.message_handler(text=["🖼 Фото"], state="*")
@@ -171,7 +171,7 @@ async def photo(message: types.Message, state: FSMContext):
 Пополните баланс или пригласите друзей по ссылке:
 <b>t.me/{link}?start={_user_id}</b>
 """
-, reply_markup = reply_keyboard(), parse_mode="HTNL")
+, reply_markup = reply_keyboard(), parse_mode="HTML")
 	await States.menu.set()
 
 #------------------------------
