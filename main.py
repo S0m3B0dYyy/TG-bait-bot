@@ -244,7 +244,7 @@ async def admin_mail(message: types.Message, state: FSMContext):
 		a = 0
 		for user in users:
 			try:
-				await bot.send_message(chat_id=user[0], text=text, parse_mode="Markdown")
+				await bot.send_message(chat_id=user[0], text=text, parse_mode="HTML")
 				a += 1
 				time.sleep(0.1)
 			except:
@@ -278,7 +278,7 @@ async def admin_mail(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
 		text = message.text.replace("/test ", "")
 		try:
-			await bot.send_message(message.chat.id, text, parse_mode="Markdown")
+			await bot.send_message(message.chat.id, text, parse_mode="HTML")
 		except:
 			await bot.send_message(message.chat.id, f"❌ Неверный текст")
 
