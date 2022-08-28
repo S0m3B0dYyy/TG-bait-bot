@@ -146,6 +146,12 @@ def add_file(_id, _type, _author):
     file_id = get_file_id(_id)
     return file_id
 
+def delete_file(_id):
+    db = sqlite3.connect('database.db')
+    cursor = db.cursor()
+    cursor.execute(f"DELETE FROM files WHERE id = '{_id}'")
+    db.commit()
+
 def get_file(_id):
     db = sqlite3.connect('database.db')
     cursor = db.cursor()
