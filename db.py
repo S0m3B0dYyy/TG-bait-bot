@@ -21,6 +21,11 @@ def check_db():
         cursor.execute("CREATE TABLE settings(id INTEGER PRIMARY KEY AUTOINCREMENT, qiwi TEXT, video INT, photo INT, stbal INT, bonus INT)")
         cursor.execute(f"INSERT INTO settings(qiwi, video, photo, stbal, bonus) VALUES ('89876543210', 10, 5, 30, 30)")
         db.commit()
+    try:
+        cursor.execute("SELECT * FROM files")
+    except sqlite3.OperationalError:
+        cursor.execute("CREATE TABLE files(id INTEGER PRIMARY KEY AUTOINCREMENT, tg_id TEXT, type TEXT, author INT)")
+        db.commit()
     print(f"-----   {_datetime}   -----")
     print(f"---------   Users: {len(get_all_users())}   --------\n")
 
@@ -132,3 +137,28 @@ def get_old_users(days):
     cursor.execute(f"""SELECT user_id FROM users WHERE ([reg_date] BETWEEN date('now', '-{days} day') AND date('now', '+1 day'))""")
     row = cursor.fetchall()
     return row
+
+def add_file(_id, _type, _author):
+    db = sqlite3.connect('database.db')
+    cursor = db.cursor()
+    cursor.execute(f"INSERT INTO files(tg_id, type, author) VALUES ('{_id}', '{_type}', {_author})")
+    db.commit()
+    file_id = get_file_id(_id)
+    return file_id
+
+def get_file(_id):
+    db = sqlite3.connect('database.db')
+    cursor = db.cursor()
+    db.commit()
+    file = cursor.execute(f"SELECT * FROM files WHERE id = '{_id}'").fetchone()
+    return file
+
+def get_all_files(*_type):
+    db = sqlite3.connect('database.db')
+    cursor = db.cursor()
+    db.commit()
+    request = f"SELECT * FROM files"
+    if (_type):
+        request = request + f" WHERE type = '{_type[0]}'"
+    files = cursor.execute(request).fetchall()
+    return files
