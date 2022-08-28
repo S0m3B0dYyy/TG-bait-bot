@@ -268,6 +268,19 @@ async def admin_help(message: types.Message, state: FSMContext):
 
 #------------------------------
 
+@dp.message_handler(commands="dump", state="*")
+async def admin_get_all_files(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		if message.text.startswith("/dump "):
+			_type = message.text.replace("/dump ", "")
+			files = db.get_all_files(_type)
+		else: files = db.get_all_files()
+		for file in files:
+			if file[2] == 'photo':
+				await bot.send_photo(message.chat.id, file[1], f"{file[2]} {file[0]}\nАвтор: {file[3]}")
+			elif file[2] == 'video':
+				await bot.send_video(message.chat.id, file[1], f"{file[2]} {file[0]}\nАвтор: {file[3]}")
+
 @dp.callback_query_handler(state=States.admin_mail_accept)
 async def admin_mail(call: types.CallbackQuery, state: FSMContext):
 	if (call.data == "admin_back_2"):
