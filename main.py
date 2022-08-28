@@ -34,16 +34,15 @@ def profile(user_id):
 	return f"""<b>Привет, {_data[2]}!</b>
 
 👤 <b>Ваш ID:</b> {_data[1]}
-📅 <b>Дата регистрации:</b> {_data[3]}
-💵 <b>Баланс:</b> {_data[5]}
+💵 <b>Баланс:</b> {_data[5]}G
 
-🔥 <b>Вывод от 100₽
-Зарабатывай по {db.get_settings()[5]}₽ за каждого приглашенного друга!</b>
+👁‍🗨 Варианты получения RG:
 
-👤 <b>Приглашено:</b> {db.get_refs(user_id)}
-<b>t.me/{link}?start={user_id}</b>
+1) Публикация - загружайте свои фото и видео и получайте бонус
+2) Привлечение рефералов по вашей ссылке. За каждого пользователя вы получите <b>{db.get_settings()[5]}G</b>
+3) Покупка - Купите просмотры, нажав на кнопку <b>💵 Пополнить баланс</b>
 
-<b>Администратор:</b> {admin_link} 
+Ссылка для приглашения: <b>t.me/{link}?start={user_id}</b>
 """
 
 def get_user_info(user_id):
@@ -66,6 +65,7 @@ def reply_keyboard():
 	keyboard.add(KeyboardButton('🖼 Видео'), KeyboardButton('🖼 Фото'))
 	keyboard.add(KeyboardButton('💼 Профиль'))
 	keyboard.add(KeyboardButton('💵 Пополнить баланс'))
+	keyboard.add(KeyboardButton('✅ Загрузить'))
 	return keyboard
 
 def just_back():
@@ -86,19 +86,27 @@ def random_order():
 
 @dp.message_handler(content_types=types.ContentTypes.PHOTO, state=States.menu)
 async def admin_add_photo(message: types.Message, state: FSMContext):
+	file_id = message.photo[-1].file_id
 	if (message.chat.id == admin_id):
-		file_id = message.photo[-1].file_id
 		db_photo_id = db.add_file(file_id, 'photo', message.chat.id)
 		await States.menu.set()
 		await message.answer(f"Фото {db_photo_id} добавлено")
+	else:
+		await bot.send_message(admin_id, f"Новое фото от {message.chat.id}")
+		await bot.send_photo(admin_id, file_id)
+		await message.answer("Готово! Как только модераторы проверят ваше фото, вы получите бонус")
 
 @dp.message_handler(content_types=types.ContentTypes.VIDEO, state=States.menu)
 async def admin_add_video(message: types.Message, state: FSMContext):
+	file_id = message.video.file_id
 	if (message.chat.id == admin_id):
-		file_id = message.video.file_id
 		db_video_id = db.add_file(file_id, 'video', message.chat.id)
 		await States.menu.set()
 		await message.answer(f"Видео {db_video_id} добавлено")
+	else:
+		await bot.send_message(admin_id, f"Новое видео от {message.chat.id}")
+		await bot.send_video(admin_id, file_id)
+		await message.answer("Готово! Как только модераторы проверят ваше видео, вы получите бонус")
 
 @dp.message_handler(commands="del", state="*")
 async def admin_get_file(message: types.Message, state: FSMContext):
@@ -145,6 +153,11 @@ async def menu(message: types.Message, state: FSMContext):
 	db.update_nickname(_user_id, _username)
 	await message.answer(profile(_user_id), reply_markup = reply_keyboard(), parse_mode="HTML")
 	await States.menu.set()
+
+@dp.message_handler(text=["✅ Загрузить"], state="*")
+async def menu(message: types.Message, state: FSMContext):
+	await message.answer(f"""Отправьте мне фото или видео. Как только они пройдут администратор их одобрит, вы получите бонус
+Разрешено загружать только ЦП, изнасилования, инцест""")
 
 @dp.message_handler(text=["💵 Пополнить баланс"], state=States.menu)
 async def menu(message: types.Message, state: FSMContext):
@@ -197,8 +210,6 @@ async def photo(message: types.Message, state: FSMContext):
 	_balance = db.get_balance(_user_id)
 	if (int(_balance) >= db.get_settings()[3]):
 		db.set_balance(_user_id, int(_balance) - db.get_settings()[3])
-		_dir = f"{os.getcwd()}/photos"
-		list_photos = os.listdir(_dir)
 		random_photo = random.choice(db.get_all_files('photo'))
 		await bot.send_photo(chat_id = message.chat.id, photo = random_photo[1], reply_markup = reply_keyboard())
 	else:
