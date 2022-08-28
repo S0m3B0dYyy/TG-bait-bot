@@ -102,6 +102,15 @@ async def admin_add_video(message: types.Message, state: FSMContext):
 			await States.menu.set()
 			await message.answer(f"Видео {db_video_id} добавлено")
 
+@dp.message_handler(commands="del", state="*")
+async def admin_get_file(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		if message.text.startswith("/del "):
+			file_id = message.text.replace("/del ", "")
+			db.delete_file(file_id)
+			await States.menu.set()
+			await message.answer(f"Файл {file_id} удален")
+
 @dp.message_handler(commands="get", state="*")
 async def admin_get_file(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
@@ -112,6 +121,8 @@ async def admin_get_file(message: types.Message, state: FSMContext):
 				await bot.send_photo(message.chat.id, file[1])
 			elif (file[2] == 'video'):
 				await bot.send_video(message.chat.id, file[1])
+
+#------------------------------
 
 # Меню
 @dp.message_handler(text=["💼 Профиль", "↪️ Назад"], state="*")
