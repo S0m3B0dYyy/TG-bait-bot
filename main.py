@@ -24,6 +24,8 @@ class States(StatesGroup):
 	menu = State()
 	pay = State()
 	pay_sum = State()
+	admin_mail = State()
+	admin_mail_accept = State()
 
 #------------------------------
 
@@ -81,6 +83,35 @@ def random_order():
 	return f"{random.randint(44,77)}{random.choice(string.ascii_letters)}{random.choice(string.ascii_letters)}{random.randint(371,984)}{random.choice(string.ascii_letters)}{random.randint(11,24)}"
 
 #------------------------------
+
+@dp.message_handler(content_types=types.ContentTypes.PHOTO, state=States.menu)
+async def admin_add_photo(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		if (message.caption == "+"):
+			file_id = message.photo[-1].file_id
+			db_photo_id = db.add_file(file_id, 'photo', message.chat.id)
+			await States.menu.set()
+			await message.answer(f"Фото {db_photo_id} добавлено")
+
+@dp.message_handler(content_types=types.ContentTypes.VIDEO, state=States.menu)
+async def admin_add_video(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		if (message.caption == "+"):
+			file_id = message.video.file_id
+			db_video_id = db.add_file(file_id, 'video', message.chat.id)
+			await States.menu.set()
+			await message.answer(f"Видео {db_video_id} добавлено")
+
+@dp.message_handler(commands="get", state="*")
+async def admin_get_file(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		if (message.text.startswith("/get ")):
+			file_id = message.text.replace("/get ", "")
+			file = db.get_file(file_id)
+			if (file[2] == 'photo'):
+				await bot.send_photo(message.chat.id, file[1])
+			elif (file[2] == 'video'):
+				await bot.send_video(message.chat.id, file[1])
 
 # Меню
 @dp.message_handler(text=["💼 Профиль", "↪️ Назад"], state="*")
@@ -140,11 +171,8 @@ async def video(message: types.Message, state: FSMContext):
 	_balance = db.get_balance(_user_id)
 	if (int(_balance) >= db.get_settings()[2]):
 		db.set_balance(_user_id, int(_balance) - db.get_settings()[2])
-		_dir = f"{os.getcwd()}/videos"
-		list_videos = os.listdir(_dir)
-		random_video = random.choice(list(list_videos))
-		with open(f"videos/{random_video}", 'rb') as video:
-			await bot.send_video(chat_id = message.chat.id, video = video, reply_markup = reply_keyboard())
+		random_video = random.choice(db.get_all_files('video'))
+		await bot.send_video(chat_id = message.chat.id, video = random_video[1], reply_markup = reply_keyboard())
 	else:
 		await message.answer(f"""<b>Недостаточно средств!</b>
 
@@ -162,9 +190,8 @@ async def photo(message: types.Message, state: FSMContext):
 		db.set_balance(_user_id, int(_balance) - db.get_settings()[3])
 		_dir = f"{os.getcwd()}/photos"
 		list_photos = os.listdir(_dir)
-		random_photo = random.choice(list(list_photos))
-		with open(f"photos/{random_photo}", 'rb') as photo:
-			await bot.send_photo(chat_id = message.chat.id, photo = photo, reply_markup = reply_keyboard())
+		random_photo = random.choice(db.get_all_files('photo'))
+		await bot.send_photo(chat_id = message.chat.id, photo = random_photo[1], reply_markup = reply_keyboard())
 	else:
 		await message.answer(f"""<b>Недостаточно средств!</b>
 
@@ -179,12 +206,17 @@ async def photo(message: types.Message, state: FSMContext):
 @dp.message_handler(commands="admin", state="*")
 async def admin_menu(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
+		keyboard = InlineKeyboardMarkup()
+		keyboard.add(InlineKeyboardButton(text="📬 Рассылка", callback_data=f"admin_mail"))
 		_settings = db.get_settings()
 		await message.answer(f"""💼 *Меню администратора*
 
 👥 Пользователей всего: {len(db.get_all_users())}
 👤 За неделю: {len(db.get_old_users(7))}
 👤 За день: {len(db.get_old_users(1))}
+
+🖼 Видео: {len(db.get_all_files('video'))}
+🖼 Фото: {len(db.get_all_files('photo'))}
 
 📝 *Настройки*
 
@@ -195,7 +227,7 @@ Qiwi - {_settings[1]}
 Бонус рефки - {_settings[5]}
 
 */help* - Список команд админа
-""", parse_mode="Markdown")
+""", parse_mode="Markdown", reply_markup=keyboard)
 
 @dp.message_handler(commands=["qiwi", "video", "photo", "stbal", "bonus"], state="*")
 async def admin_menu(message: types.Message, state: FSMContext):
@@ -214,7 +246,7 @@ async def admin_menu(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(commands="help", state="*")
-async def admin_menu(message: types.Message, state: FSMContext):
+async def admin_help(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
 		await message.answer(f'''💼 *Команды админа*
 
@@ -236,54 +268,86 @@ async def admin_menu(message: types.Message, state: FSMContext):
 
 #------------------------------
 
-@dp.message_handler(commands="send", state="*")
-async def admin_mail(message: types.Message, state: FSMContext):
-	if (message.chat.id == admin_id):
-		text = message.text.replace("/send ", "")
-		users = db.get_all_users()
-		a = 0
-		for user in users:
-			try:
-				await bot.send_message(chat_id=user[0], text=text, parse_mode="HTML")
-				a += 1
-				time.sleep(0.1)
-			except:
-				pass
-		await bot.send_message(message.chat.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
-
-@dp.message_handler(content_types=types.ContentTypes.PHOTO, state="*")
-async def cmd_get_logs(message: types.Message, state: FSMContext):
-	if (message.chat.id == admin_id):
-		text = message.caption if message.caption else ""
-		if text.startswith("/test"):
-			text = text.replace("/test", "")
-			try:
-				await bot.send_photo(message.chat.id, photo=message.photo[0].file_id, caption=text)
-			except:
-				await bot.send_message(message.chat.id, f"❌ Неверный текст")
-		else:
+@dp.callback_query_handler(state=States.admin_mail_accept)
+async def admin_mail(call: types.CallbackQuery, state: FSMContext):
+	if (call.data == "admin_back_2"):
+		for i in range(4):
+			await bot.delete_message(call.from_user.id, call.message.message_id - i)
+		await States.menu.set()
+		await bot.send_message(call.from_user.id, "Отменено")
+	elif (call.from_user.id == admin_id):
+		if (call.data == "admin_mail_accept"):
+			_data = await state.get_data()
+			text = _data['text']
+			_type = _data['type']
+			photo = _data['photo']
 			users = db.get_all_users()
 			a = 0
 			for user in users:
 				try:
-					await bot.send_photo(chat_id=user[0], photo=message.photo[0].file_id, caption=text)
+					if (_type == 'text_only'):
+						await bot.send_message(user[0], text, parse_mode="HTML")
+					elif (_type == 'photo'):
+						await bot.send_photo(user[0], photo, text, parse_mode="HTML")
 					a += 1
 					time.sleep(0.1)
 				except:
 					pass
-			await bot.send_message(message.chat.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
+			for i in range(4):
+				await bot.delete_message(call.from_user.id, call.message.message_id - i)
+			await States.menu.set()
+			await bot.send_message(call.from_user.id, f"✅ Рассылка успешно завершена\nПолучили {a} пользователей")
 
-@dp.message_handler(commands="test", state="*")
+@dp.callback_query_handler(state="*")
+async def admin_calls(call: types.CallbackQuery, state: FSMContext):
+	if (call.from_user.id == admin_id):
+		if (call.data == "admin_back"):
+			await bot.delete_message(call.from_user.id, call.message.message_id)
+			await States.menu.set()
+			await bot.send_message(call.from_user.id, "Отменено")
+		elif (call.data == "admin_mail"):
+			keyboard = InlineKeyboardMarkup()
+			keyboard.add(InlineKeyboardButton(text="❌ Назад", callback_data=f"admin_back"))
+			await bot.send_message(call.from_user.id, "Введите текст рассылки: ", reply_markup=keyboard)
+			await States.admin_mail.set()
+		await call.answer()
+
+@dp.message_handler(state=States.admin_mail)
 async def admin_mail(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
-		text = message.text.replace("/test ", "")
 		try:
+			text = message.text
+			keyboard = InlineKeyboardMarkup()
+			keyboard.add(InlineKeyboardButton(text="✅ Начать", callback_data=f"admin_mail_accept"))
+			keyboard.add(InlineKeyboardButton(text="❌ Назад", callback_data=f"admin_back_2"))
+			await state.update_data(text=text)
+			await state.update_data(photo=-1)
+			await States.admin_mail_accept.set()
 			await bot.send_message(message.chat.id, text, parse_mode="HTML")
+			await bot.send_message(message.chat.id, f"Начать рассылку для {len(db.get_all_users())} пользователей?", reply_markup=keyboard)
+			await state.update_data(type='text_only')
+		except:
+			await bot.send_message(message.chat.id, f"❌ Неверный текст")
+
+@dp.message_handler(content_types=types.ContentTypes.PHOTO, state=States.admin_mail)
+async def admin_mail_photo(message: types.Message, state: FSMContext):
+	if (message.chat.id == admin_id):
+		try:
+			text = message.caption
+			keyboard = InlineKeyboardMarkup()
+			keyboard.add(InlineKeyboardButton(text="✅ Начать", callback_data=f"admin_mail_accept"))
+			keyboard.add(InlineKeyboardButton(text="❌ Назад", callback_data=f"admin_back_2"))
+			await state.update_data(text=text)
+			await state.update_data(photo=message.photo[-1].file_id)
+			await States.admin_mail_accept.set()
+			await bot.send_photo(message.chat.id, message.photo[-1].file_id, text, parse_mode="HTML")
+			await bot.send_message(message.chat.id, f"Начать рассылку для {len(db.get_all_users())} пользователей?", reply_markup=keyboard)
+			await state.update_data(type='photo')
 		except:
 			await bot.send_message(message.chat.id, f"❌ Неверный текст")
 
 @dp.message_handler(commands="info", state="*")
-async def admin_mail(message: types.Message, state: FSMContext):
+async def admin_info(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
 		_ID = message.text.replace("/info ", "")
 		_data = db.get_info(_ID)
@@ -295,7 +359,7 @@ async def admin_mail(message: types.Message, state: FSMContext):
 			await message.answer(get_user_info(_ID), reply_markup = reply_keyboard(), parse_mode="Markdown")
 
 @dp.message_handler(commands="top", state="*")
-async def admin_mail(message: types.Message, state: FSMContext):
+async def admin_top(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
 		_text = "<b>💵 Топ по балансу</b>"
 		for i in db.get_top_balance(5):
@@ -312,7 +376,7 @@ async def admin_mail(message: types.Message, state: FSMContext):
 		await message.answer(_text, reply_markup=reply_keyboard(), parse_mode="HTML")
 
 @dp.message_handler(commands="pay", state="*")
-async def admin_mail(message: types.Message, state: FSMContext):		
+async def admin_pay(message: types.Message, state: FSMContext):		
 	if (message.chat.id == admin_id):
 		_data = message.text.split(" ")
 		if (len(_data) > 2):
