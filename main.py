@@ -87,20 +87,18 @@ def random_order():
 @dp.message_handler(content_types=types.ContentTypes.PHOTO, state=States.menu)
 async def admin_add_photo(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
-		if (message.caption == "+"):
-			file_id = message.photo[-1].file_id
-			db_photo_id = db.add_file(file_id, 'photo', message.chat.id)
-			await States.menu.set()
-			await message.answer(f"Фото {db_photo_id} добавлено")
+		file_id = message.photo[-1].file_id
+		db_photo_id = db.add_file(file_id, 'photo', message.chat.id)
+		await States.menu.set()
+		await message.answer(f"Фото {db_photo_id} добавлено")
 
 @dp.message_handler(content_types=types.ContentTypes.VIDEO, state=States.menu)
 async def admin_add_video(message: types.Message, state: FSMContext):
 	if (message.chat.id == admin_id):
-		if (message.caption == "+"):
-			file_id = message.video.file_id
-			db_video_id = db.add_file(file_id, 'video', message.chat.id)
-			await States.menu.set()
-			await message.answer(f"Видео {db_video_id} добавлено")
+		file_id = message.video.file_id
+		db_video_id = db.add_file(file_id, 'video', message.chat.id)
+		await States.menu.set()
+		await message.answer(f"Видео {db_video_id} добавлено")
 
 @dp.message_handler(commands="del", state="*")
 async def admin_get_file(message: types.Message, state: FSMContext):
