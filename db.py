@@ -143,7 +143,7 @@ def add_file(_id, _type, _author):
     cursor = db.cursor()
     cursor.execute(f"INSERT INTO files(tg_id, type, author) VALUES ('{_id}', '{_type}', {_author})")
     db.commit()
-    file_id = get_file_id(_id)
+    file_id = cursor.execute(f"SELECT id FROM files WHERE tg_id = '{_id}'").fetchone()[0]
     return file_id
 
 def delete_file(_id):
