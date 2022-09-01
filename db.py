@@ -113,7 +113,7 @@ def get_pre_ref(user_id):
 def get_top_ref(limit):
     db = sqlite3.connect('database.db')
     cursor = db.cursor()
-    cursor.execute(f"SELECT *, COUNT(ref_id) AS ref_count FROM USERS WHERE ref_id != 0 GROUP BY ref_id ORDER BY COUNT(ref_id) DESC LIMIT {limit}")
+    cursor.execute(f"SELECT COUNT(ref_id) AS ref_count, * FROM USERS WHERE ref_id != 0 GROUP BY ref_id ORDER BY COUNT(ref_id) DESC LIMIT {limit}")
     row = cursor.fetchall()
     return row
 
