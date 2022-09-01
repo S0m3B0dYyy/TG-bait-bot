@@ -66,7 +66,6 @@ def reply_keyboard():
 	keyboard.add(KeyboardButton('🖼 Видео'), KeyboardButton('🖼 Фото'))
 	keyboard.add(KeyboardButton('💼 Профиль'))
 	keyboard.add(KeyboardButton('💵 Пополнить баланс'))
-	keyboard.add(KeyboardButton('✅ Загрузить'))
 	return keyboard
 
 def just_back():
@@ -409,8 +408,8 @@ async def admin_top(message: types.Message, state: FSMContext):
 		top_refs = db.get_top_ref(5)
 		if top_refs:
 			for i in top_refs:
-				_temp_name = db.get_info(i[0])[2]
-				_text = _text + f"\n{i[1]} | {i[0]} (@{_temp_name})"
+				_temp_name = db.get_info(i[2])[2]
+				_text = _text + f"\n{i[0]} | {i[2]} (@{_temp_name})"
 		else:
 			_text = _text + f"\nНикто никого не пригласил"
 		await message.answer(_text, reply_markup=reply_keyboard(), parse_mode="HTML")
