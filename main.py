@@ -66,6 +66,7 @@ def reply_keyboard():
 	keyboard.add(KeyboardButton('🖼 Видео'), KeyboardButton('🖼 Фото'))
 	keyboard.add(KeyboardButton('💼 Профиль'))
 	keyboard.add(KeyboardButton('💵 Пополнить баланс'))
+	keyboard.add(KeyboardButton('✅ Загрузить'))
 	return keyboard
 
 def just_back():
@@ -271,7 +272,6 @@ async def admin_help(message: types.Message, state: FSMContext):
 		await message.answer(f'''💼 *Команды админа*
 
 */help* - Список команд админа
-*/send тест* - Рассылка
 */top* - Рейтинг пользователей
 */pay 123 999* - Пополнение пользователю с ID 123 на 999
 */pay all 100* - Пополнение всем
