@@ -45,7 +45,7 @@ def add_user_to_db(user_id, nickname, ref_id, balance):
 def update_nickname(user_id, nickname):
     db = sqlite3.connect('database.db')
     cursor = db.cursor()
-    cursor.execute(f"UPDATE users SET nickname = '{nickname}' WHERE user_id = {user_id}")
+    cursor.execute("UPDATE users SET nickname = ? WHERE user_id = ?", (nickname, user_id))
     db.commit()
 
 def get_settings():
